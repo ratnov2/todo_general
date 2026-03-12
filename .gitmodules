@@ -1,0 +1,9 @@
+[submodule "gateway"]
+	path = gateway
+	url = git@github.com:ratnov2/todo_gateway.git
+[submodule "backend"]
+	path = backend
+	url = https://github.com/ratnov2/todo_backend.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/ratnov2/todo_frontend.git
