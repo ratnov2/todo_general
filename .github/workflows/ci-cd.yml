@@ -2,11 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - frontend
-      - backend
-      - gateway
+    branches: [main]
+  repository_dispatch:
+    types: [backend_updated, frontend_updated, gateway_updated]
   workflow_dispatch: # возможность запускать вручную
 
 env:
@@ -19,6 +17,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [gateway, backend, frontend]
+
     steps:
       - name: Check Docker secrets
         run: |
