@@ -7,3 +7,6 @@
 [submodule "main"]
 	path = main
 	url = https://github.com/ratnov2/todo_main.git
+[submodule "gateway"]
+	path = gateway
+	url = https://github.com/ratnov2/todo_gateway.git
