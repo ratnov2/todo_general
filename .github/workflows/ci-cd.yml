@@ -1,0 +1,93 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - frontend
+      - backend
+      - gateway
+  workflow_dispatch: # возможность запускать вручную
+
+env:
+  DOMAIN: ${{ secrets.DOMAIN }}
+  GIT_USER: ${{ secrets.GIT_USER }}
+  GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Docker secrets
+        run: |
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}"
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive # подтягивает gateway, backend, frontend, main
+          fetch-depth: 0
+          token: ${{ secrets.GIT_TOKEN }}
+
+      - name: List repository files
+        run: ls -R
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      # Build & Push образы из подмодулей
+      - name: Build and push gateway
+        run: |
+          docker build --platform linux/amd64 -t kaka22897/todo_gateway:latest -f gateway/Dockerfile gateway
+          docker push kaka22897/todo_gateway:latest
+
+      - name: Build and push backend
+        run: |
+          docker build --platform linux/amd64 -t kaka22897/todo_backend:latest -f backend/Dockerfile backend
+          docker push kaka22897/todo_backend:latest
+
+      - name: Build and push frontend
+        run: |
+          docker build --platform linux/amd64 -t kaka22897/todo_frontend:latest -f frontend/Dockerfile frontend
+          docker push kaka22897/todo_frontend:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan 139.28.222.68 >> ~/.ssh/known_hosts
+
+      - name: Copy .env file
+        run: scp "${{ secrets.ENV_FILE }}" root@139.28.222.68:/root/general/.env
+
+      - name: Deploy on server
+        run: |
+          ssh root@139.28.222.68 << 'EOF'
+          docker network create --driver bridge --attachable shared-network || true
+          cd /root/general
+          git pull
+          docker compose pull
+          docker compose down --remove-orphans
+          docker compose up --build --detach
+
+          if [ -f /root/blog/docker-compose.yml ]; then
+            cd /root/blog
+            docker compose down --remove-orphans
+            docker compose up --build --detach
+          fi
+
+          docker image prune -f || true
+          rm -f .env
+          EOF

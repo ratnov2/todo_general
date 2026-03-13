@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  backend_app:
+    build:
+      context: backend
+    container_name: backend_app
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - 9002:3002
+    networks:
+      - vb
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 6432:5432
+    networks:
+      - vb
+    env_file:
+      - .env
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Web UI
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - vb
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  vb:
+    name: vb
