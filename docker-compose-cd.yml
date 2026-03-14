@@ -1,6 +1,7 @@
 services:
   frontend:
     image: kaka22897/todo_frontend:latest
+    container_name: frontend
     platform: linux/amd64
     mem_limit: 512m
     pids_limit: 128
@@ -29,6 +30,7 @@ services:
 
   backend:
     image: kaka22897/todo_backend:latest
+    container_name: backend
     tty: true
     env_file:
       - .env
