@@ -16,16 +16,54 @@ env:
   IP: ${{ secrets.IP }}
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.set-matrix.outputs.services }}
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.GIT_TOKEN }}
+
+      - name: Detect changed services
+        id: set-matrix
+        run: |
+          echo "Checking which services changed..."
+          CHANGED_SERVICES=()
+
+          # Проверяем сабмодули
+          if git diff --name-only HEAD^ HEAD | grep -q '^gateway/'; then
+            CHANGED_SERVICES+=("gateway")
+          fi
+          if git diff --name-only HEAD^ HEAD | grep -q '^backend/'; then
+            CHANGED_SERVICES+=("backend")
+          fi
+          if git diff --name-only HEAD^ HEAD | grep -q '^frontend/'; then
+            CHANGED_SERVICES+=("frontend")
+          fi
+
+          # Если ничего не изменилось, билдим всё (опционально)
+          if [ ${#CHANGED_SERVICES[@]} -eq 0 ]; then
+            CHANGED_SERVICES=("gateway" "backend" "frontend")
+          fi
+
+          echo "Changed services: ${CHANGED_SERVICES[@]}"
+          echo "::set-output name=services::$(printf '%s,' "${CHANGED_SERVICES[@]}" | sed 's/,$//')"
+
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [gateway, backend, frontend]
+        service: ${{ fromJson('["' + needs.detect-changes.outputs.services.replace(',', '","') + '"]') }}
 
     steps:
       - name: Check Docker secrets
         run: |
           echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}"
+
       - name: Checkout repository with submodules
         uses: actions/checkout@v3
         with:
