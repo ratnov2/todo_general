@@ -50,14 +50,15 @@ jobs:
             CHANGED_SERVICES=("gateway" "backend" "frontend")
           fi
 
-          echo "Changed services: ${CHANGED_SERVICES[@]}"
-          echo "::set-output name=services::$(printf '%s,' "${CHANGED_SERVICES[@]}" | sed 's/,$//')"
+          SERVICES_JSON=$(printf '%s\n' "${CHANGED_SERVICES[@]}" | jq -R . | jq -s .)
+          echo "Detected services JSON: $SERVICES_JSON"
+          echo "::set-output name=services::$SERVICES_JSON"
 
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson('["' + needs.detect-changes.outputs.services.replace(',', '","') + '"]') }}
+        service: ${{fromJson(needs.detect-changes.outputs.services)}}
 
     steps:
       - name: Check Docker secrets
