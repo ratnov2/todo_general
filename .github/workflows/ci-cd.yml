@@ -122,9 +122,9 @@ jobs:
           docker network create --driver bridge --attachable vb || true
           cd /root/general
           git pull
-          docker compose -f docker-compose-cd pull
-          docker compose -f docker-compose-cd down --remove-orphans
-          docker compose -f docker-compose-cd up --detach
+          docker compose -f docker-compose-cd.yml pull
+          docker compose -f docker-compose-cd.yml down --remove-orphans
+          docker compose -f docker-compose-cd.yml up --detach
 
           docker image prune -f || true
           EOF
