@@ -73,11 +73,12 @@ jobs:
           ssh-keyscan ${{ env.IP }} >> ~/.ssh/known_hosts
 
       - name: Copy .env file
-        run: echo "${{ secrets.ENV_FILE }}" root@${{ env.IP }}:/root/general/.env
+        run: |
+          echo "${{ secrets.ENV_FILE }}" | ssh -i ~/.ssh/id_ed25519 root@${{ env.IP }} 'cat > /root/general/.env'
 
       - name: Deploy on server
         run: |
-          ssh root@${{ env.IP }} << 'EOF'
+          ssh -i ~/.ssh/id_ed25519  root@${{ env.IP }} << 'EOF'
           docker network create --driver bridge --attachable shared-network || true
           cd /root/general
           git pull
