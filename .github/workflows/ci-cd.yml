@@ -13,6 +13,7 @@ env:
   GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  IP: ${{ secrets.IP }}
 
 jobs:
   build:
@@ -69,27 +70,20 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan 139.28.222.68 >> ~/.ssh/known_hosts
+          ssh-keyscan ${{ env.IP }} >> ~/.ssh/known_hosts
 
       - name: Copy .env file
-        run: scp "${{ secrets.ENV_FILE }}" root@139.28.222.68:/root/general/.env
+        run: echo "${{ secrets.ENV_FILE }}" root@${{ env.IP }}:/root/general/.env
 
       - name: Deploy on server
         run: |
-          ssh root@139.28.222.68 << 'EOF'
+          ssh root@${{ env.IP }} << 'EOF'
           docker network create --driver bridge --attachable shared-network || true
           cd /root/general
           git pull
           docker compose pull
           docker compose down --remove-orphans
-          docker compose up --build --detach
-
-          if [ -f /root/blog/docker-compose.yml ]; then
-            cd /root/blog
-            docker compose down --remove-orphans
-            docker compose up --build --detach
-          fi
+          docker compose up --detach
 
           docker image prune -f || true
-          rm -f .env
           EOF
