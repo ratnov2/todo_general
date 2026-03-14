@@ -1,0 +1,98 @@
+services:
+  frontend:
+    image: kaka22897/todo_frontend:latest
+    platform: linux/amd64
+    mem_limit: 512m
+    pids_limit: 128
+    cpus: "1"
+    restart: unless-stopped
+    networks:
+      - vb
+
+  gateway:
+    image: kaka22897/todo_gateway:latest
+    platform: linux/amd64
+    container_name: gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - vb
+
+  backend:
+    image: kaka22897/todo_backend:latest
+    tty: true
+    env_file:
+      - .env
+    expose:
+      - "3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - vb
+
+  database:
+    image: postgres:15
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready --dbname=representation --username=representation_user",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    networks:
+      - vb
+
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - vb
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Web UI
+    env_file:
+      - .env
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - vb
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  vb:
+    external: true

@@ -119,12 +119,12 @@ jobs:
       - name: Deploy on server
         run: |
           ssh -i ~/.ssh/id_ed25519  root@${{ env.IP }} << 'EOF'
-          docker network create --driver bridge --attachable shared-network || true
+          docker network create --driver bridge --attachable vb || true
           cd /root/general
           git pull
-          docker compose pull
-          docker compose down --remove-orphans
-          docker compose up --detach
+          docker compose -f docker-compose-cd pull
+          docker compose -f docker-compose-cd down --remove-orphans
+          docker compose -f docker-compose-cd up --detach
 
           docker image prune -f || true
           EOF
