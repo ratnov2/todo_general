@@ -1,10 +1,12 @@
 #!/bin/bash
 
-domains=(entergen.ru www.entergen.ru)
+domains=(ratodo.ru www.ratodo.ru)
 rsa_key_size=4096
 data_path="./certbot"
 email="anton.ratnov@yandex.ru" # твоя почта
 staging=1 # staging=1 — если хочешь потестить
+
+GATEWAY_CONTAINER="gateway"
 
 echo ">> Проверка наличия данных"
 if [ -d "$data_path/conf/live/${domains[0]}" ]; then
@@ -32,7 +34,7 @@ docker compose run --rm --entrypoint "\
     -subj '/CN=localhost'" certbot
 
 echo ">> Запуск nginx"
-docker compose up -d entergen-gateway
+docker compose up -d $GATEWAY_CONTAINER
 
 echo ">> Удаление временного сертификата"
 docker compose run --rm --entrypoint "\
@@ -59,4 +61,4 @@ docker compose run --rm --entrypoint "\
     --force-renewal" certbot
 
 echo ">> Перезапуск nginx с новыми сертификатами"
-docker compose exec entergen-gateway nginx -s reload
+docker compose exec $GATEWAY_CONTAINER nginx -s reload
