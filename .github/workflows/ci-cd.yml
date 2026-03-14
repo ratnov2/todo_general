@@ -51,6 +51,12 @@ jobs:
           fi
 
           SERVICES_JSON=$(printf '%s\n' "${CHANGED_SERVICES[@]}" | jq -R . | jq -s .)
+
+          # Если по какой-то причине JSON пустой, заменяем на все сервисы
+          if [ "$SERVICES_JSON" == "[]" ]; then
+            SERVICES_JSON='["gateway","backend","frontend"]'
+          fi
+
           echo "Detected services JSON: $SERVICES_JSON"
           echo "::set-output name=services::$SERVICES_JSON"
 
