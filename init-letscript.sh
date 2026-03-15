@@ -25,6 +25,11 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
 fi
 
+echo ">> Удаляем старые сертификаты на хосте"
+rm -rf ./certbot/conf/live/ratodo.ru*
+rm -rf ./certbot/conf/archive/ratodo.ru*
+rm -f  ./certbot/conf/renewal/ratodo.ru*.conf
+
 echo ">> Создание временного самоподписанного сертификата"
 path="/etc/letsencrypt/live/${domains[0]}"
 $DC run --rm --entrypoint "\
