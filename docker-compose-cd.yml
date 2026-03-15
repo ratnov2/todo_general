@@ -69,6 +69,7 @@ services:
 
   certbot:
     image: certbot/certbot
+    container_name: certbot
     restart: unless-stopped
     volumes:
       - ./certbot/www:/var/www/certbot
