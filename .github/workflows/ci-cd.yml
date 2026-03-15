@@ -98,7 +98,7 @@ jobs:
 
       - name: Build and push frontend
         run: |
-          docker build --platform linux/amd64 -t kaka22897/todo_frontend:latest -f frontend/Dockerfile frontend
+          docker build --build-arg VITE_API_URL=${{ secrets.VITE_API_URL }} --platform linux/amd64 -t kaka22897/todo_frontend:latest -f frontend/Dockerfile frontend
           docker push kaka22897/todo_frontend:latest
 
   deploy:
