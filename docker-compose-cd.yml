@@ -34,8 +34,6 @@ services:
     tty: true
     env_file:
       - .env
-    expose:
-      - "8000:3000"
     depends_on:
       database:
         condition: service_healthy
