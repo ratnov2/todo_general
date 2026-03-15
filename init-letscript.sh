@@ -38,9 +38,9 @@ docker compose up -d $GATEWAY_CONTAINER
 
 echo ">> Удаление временного сертификата"
 docker compose run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/${domains[0]} && \
-  rm -Rf /etc/letsencrypt/archive/${domains[0]} && \
-  rm -Rf /etc/letsencrypt/renewal/${domains[0]}.conf" certbot
+  rm -Rf /etc/letsencrypt/live/${domains[0]}* && \
+  rm -Rf /etc/letsencrypt/archive/${domains[0]}* && \
+  rm -Rf /etc/letsencrypt/renewal/${domains[0]}*.conf" certbot
 
 echo ">> Запрос Let's Encrypt сертификата"
 domain_args=""
@@ -53,6 +53,7 @@ email_arg="--email $email"
 
 docker compose run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
+    --cert-name ${domains[0]} \
     $staging_arg \
     $email_arg \
     $domain_args \

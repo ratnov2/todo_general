@@ -9,7 +9,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - 9002:3002
+      - 8000:3000
     networks:
       - vb
     volumes:
