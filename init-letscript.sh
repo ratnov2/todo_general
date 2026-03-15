@@ -7,6 +7,7 @@ email="anton.ratnov@yandex.ru" # твоя почта
 staging=1 # staging=1 — если хочешь потестить
 
 GATEWAY_CONTAINER="gateway"
+DC="docker compose -f /root/general/docker-compose-cd.yml"
 
 echo ">> Проверка наличия данных"
 if [ -d "$data_path/conf/live/${domains[0]}" ]; then
@@ -26,7 +27,7 @@ fi
 
 echo ">> Создание временного самоподписанного сертификата"
 path="/etc/letsencrypt/live/${domains[0]}"
-docker compose run --rm --entrypoint "\
+$DC run --rm --entrypoint "\
   mkdir -p $path && \
   openssl req -x509 -nodes -newkey rsa:${rsa_key_size} -days 1 \
     -keyout '$path/privkey.pem' \
@@ -34,10 +35,10 @@ docker compose run --rm --entrypoint "\
     -subj '/CN=localhost'" certbot
 
 echo ">> Запуск nginx"
-docker compose up -d $GATEWAY_CONTAINER
+$DC up -d $GATEWAY_CONTAINER
 
 echo ">> Удаление временного сертификата"
-docker compose run --rm --entrypoint "\
+$DC run --rm --entrypoint "\
   rm -Rf /etc/letsencrypt/live/${domains[0]}* && \
   rm -Rf /etc/letsencrypt/archive/${domains[0]}* && \
   rm -Rf /etc/letsencrypt/renewal/${domains[0]}*.conf" certbot
@@ -51,7 +52,7 @@ done
 email_arg="--email $email"
 [ $staging != "0" ] && staging_arg="--staging"
 
-docker compose run --rm --entrypoint "\
+$DC run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     --cert-name ${domains[0]} \
     $staging_arg \
@@ -62,4 +63,4 @@ docker compose run --rm --entrypoint "\
     --force-renewal" certbot
 
 echo ">> Перезапуск nginx с новыми сертификатами"
-docker compose exec $GATEWAY_CONTAINER nginx -s reload
+$DC exec $GATEWAY_CONTAINER nginx -s reload
